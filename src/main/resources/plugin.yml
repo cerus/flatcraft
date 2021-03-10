@@ -1,0 +1,5 @@
+name: ${project.artifactId}
+version: ${project.version}
+main: de.cerus.flatcraft.FlatCraftPlugin
+author: Cerus
+api-version: 1.16
