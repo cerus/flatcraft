@@ -1,6 +1,7 @@
 package de.cerus.flatcraft.game.storage;
 
 import de.cerus.flatcraft.game.FlatWorld;
+import de.cerus.flatcraft.game.storage.adapters.StorageAdapters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -41,7 +42,7 @@ public class FilePapyrusStorage implements PapyrusStorage {
 
             // Open stream and store world
             try (final FileOutputStream outputStream = new FileOutputStream(file)) {
-                world.store(outputStream);
+                StorageAdapters.FLAT_WORLD_STORAGE_ADAPTER.store(world, outputStream);
             } catch (final IOException e) {
                 // Oh no - Error out
                 future.completeExceptionally(e);
@@ -65,8 +66,7 @@ public class FilePapyrusStorage implements PapyrusStorage {
 
             // Open stream and load world
             try (final FileInputStream inputStream = new FileInputStream(file)) {
-                final FlatWorld flatWorld = new FlatWorld(0);
-                flatWorld.read(inputStream);
+                final FlatWorld flatWorld = StorageAdapters.FLAT_WORLD_STORAGE_ADAPTER.load(inputStream);
                 future.complete(flatWorld);
             } catch (final IOException e) {
                 // Oh no - Error out
