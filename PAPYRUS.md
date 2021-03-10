@@ -6,7 +6,7 @@ World storage concept for 2D, voxel based worlds
 
 ## General
 
-Everything is stored in little
+Everything is stored in little endian
 
 Representation of uuids:
 
