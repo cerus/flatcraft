@@ -2,7 +2,7 @@
 
 2D Minecraft in your Minecraft chat - Inspired by [u/KevinJNguy01](https://www.reddit.com/r/Minecraft/comments/lzuhcd/playable_minecraft_in_the_chat/)
 
-**Contributions are very welcome!**
+**Contributions are very welcome!** (make sure to read [guidelines](CONTRIBUTING.md))
 
 ![Image](https://i.imgur.com/FznwSxW.png)
 
