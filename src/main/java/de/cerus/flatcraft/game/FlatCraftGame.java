@@ -73,6 +73,21 @@ public class FlatCraftGame {
                 while (this.world.getPlayer().y > 0 && (block = this.world.getBlockAt(newX, this.world.getPlayer().y - 1)) == FlatBlock.BLOCK_AIR || !block.hasCollider()) {
                     this.world.getPlayer().y -= 1;
                 }
+
+                // Load nearby 4 chunks
+                final FlatPlayer player = this.world.getPlayer();
+                if ((player.x / 16) + 1 < this.world.getMaxSize()) {
+                    this.world.getChunkAt((this.world.getPlayer().x / 16) + 1);
+                }
+                if ((player.x / 16) + 2 < this.world.getMaxSize()) {
+                    this.world.getChunkAt((this.world.getPlayer().x / 16) + 2);
+                }
+                if ((player.x / 16) - 1 >= 0) {
+                    this.world.getChunkAt((this.world.getPlayer().x / 16) - 1);
+                }
+                if ((player.x / 16) - 2 >= 0) {
+                    this.world.getChunkAt((this.world.getPlayer().x / 16) - 2);
+                }
                 return true;
             case MODE_PLACE:
                 if (x < 0 || x / 16 > this.world.getMaxSize() || y < 1 || y > 60) {

@@ -24,17 +24,26 @@ public class FlatChunkStorageAdapter extends StorageAdapter<FlatChunk> {
         final int chunkX = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt();
         inputStream.read(arr, 0, 4);
         final int size = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt();
-        if (size != 16 * 64) {
+
+        boolean extended = false;
+        if (size != 16 * 64 && !(extended = size == 16 * 64 + 2)) {
             throw new IllegalStateException();
         }
 
         // Read blocks
-        final FlatChunk chunk = new FlatChunk(chunkX);
+        final FlatChunk chunk = new FlatChunk(chunkX, true, true);
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 64; y++) {
                 inputStream.read(arr, 0, 4);
                 chunk.setBlock(x, y, blockIndex.getBlock(ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt()));
             }
+        }
+
+        if (extended) {
+            inputStream.read(arr, 0, 4);
+            chunk.setGenerated(ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt() == 1);
+            inputStream.read(arr, 0, 4);
+            chunk.setDecorated(ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt() == 1);
         }
         return chunk;
     }
@@ -48,7 +57,7 @@ public class FlatChunkStorageAdapter extends StorageAdapter<FlatChunk> {
 
         // Write coordinate and block amount
         outputStream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(chunk.getX()).array());
-        outputStream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(16 * 64).array());
+        outputStream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(16 * 64 + 2).array());
 
         // Write blocks
         for (int x = 0; x < 16; x++) {
@@ -57,6 +66,12 @@ public class FlatChunkStorageAdapter extends StorageAdapter<FlatChunk> {
                         .putInt(blockIndex.getIndex(chunk.getBlock(x, y))).array());
             }
         }
+
+        // Sneaky way to store data without changing the format
+        outputStream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(chunk.isGenerated() ? 1 : 0).array());
+        outputStream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+                .putInt(chunk.isDecorated() ? 1 : 0).array());
     }
 
 }

@@ -2,6 +2,8 @@ package de.cerus.flatcraft.game;
 
 import de.cerus.flatcraft.game.chunk.FlatBlock;
 import de.cerus.flatcraft.game.chunk.FlatChunk;
+import de.cerus.flatcraft.game.chunk.decorator.DefaultFlatChunkDecorator;
+import de.cerus.flatcraft.game.chunk.decorator.FlatChunkDecorator;
 import de.cerus.flatcraft.game.chunk.generator.DefaultFlatChunkGenerator;
 import de.cerus.flatcraft.game.chunk.generator.FlatChunkGenerator;
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.TreeMap;
 public class FlatWorld {
 
     private final FlatChunkGenerator chunkGenerator;
+    private final FlatChunkDecorator chunkDecorator;
     private final Map<Integer, FlatChunk> cachedChunks;
     private final List<FlatGameObject> gameObjects;
     private final int seed;
@@ -22,16 +25,17 @@ public class FlatWorld {
     private int maxSize;
 
     public FlatWorld(final int seed) {
-        this(seed, new DefaultFlatChunkGenerator());
+        this(seed, new DefaultFlatChunkGenerator(), new DefaultFlatChunkDecorator());
     }
 
-    public FlatWorld(final int seed, final FlatChunkGenerator chunkGenerator) {
-        this(seed, chunkGenerator, new FlatPlayer());
+    public FlatWorld(final int seed, final FlatChunkGenerator chunkGenerator, final FlatChunkDecorator chunkDecorator) {
+        this(seed, chunkGenerator, chunkDecorator, new FlatPlayer());
     }
 
-    public FlatWorld(final int seed, final FlatChunkGenerator chunkGenerator, final FlatPlayer player) {
+    public FlatWorld(final int seed, final FlatChunkGenerator chunkGenerator, final FlatChunkDecorator chunkDecorator, final FlatPlayer player) {
         this.seed = seed;
         this.chunkGenerator = chunkGenerator;
+        this.chunkDecorator = chunkDecorator;
         this.cachedChunks = new TreeMap<>();
         this.player = player;
         this.gameObjects = new ArrayList<>();
@@ -97,8 +101,10 @@ public class FlatWorld {
      * @return The generated chunk
      */
     private FlatChunk loadChunk(final int x) {
-        final FlatChunk chunk = new FlatChunk(x);
+        final FlatChunk chunk = new FlatChunk(x, false, false);
         this.chunkGenerator.generate(this, chunk);
+        // Warning: This could potentially generate and load every single chunk. We need a better solution eventually.
+        this.chunkDecorator.decorate(chunk, this);
         return chunk;
     }
 

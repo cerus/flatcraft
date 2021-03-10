@@ -7,9 +7,13 @@ public class FlatChunk {
 
     private final FlatBlock[][] blocks = new FlatBlock[16][64];
     private final int x;
+    private boolean generated;
+    private boolean decorated;
 
-    public FlatChunk(final int x) {
+    public FlatChunk(final int x, final boolean generated, final boolean decorated) {
         this.x = x;
+        this.generated = generated;
+        this.decorated = decorated;
     }
 
     public void setBlockSafe(final int x, final int y, final FlatBlock block) {
@@ -45,6 +49,22 @@ public class FlatChunk {
 
     public int getX() {
         return this.x;
+    }
+
+    public boolean isGenerated() {
+        return this.generated;
+    }
+
+    public void setGenerated(final boolean generated) {
+        this.generated = generated;
+    }
+
+    public boolean isDecorated() {
+        return this.decorated;
+    }
+
+    public void setDecorated(final boolean decorated) {
+        this.decorated = decorated;
     }
 
 }

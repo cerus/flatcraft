@@ -4,8 +4,6 @@ import de.cerus.flatcraft.game.FlatWorld;
 import de.cerus.flatcraft.game.chunk.FlatBlock;
 import de.cerus.flatcraft.game.chunk.FlatChunk;
 import hoten.perlin.Perlin1d;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -23,7 +21,6 @@ public class DefaultFlatChunkGenerator implements FlatChunkGenerator {
             this.tile = new Perlin1d(0.65, 8, world.getSeed()).createTiledArray(16 * 16);
         }
 
-        final Map<Integer, Integer> treeMap = new HashMap<>();
         final Random random = new Random(world.getSeed() + chunk.getX());
         for (int x = 0; x < 16; x++) {
             // Calculate tile access (index)
@@ -56,52 +53,10 @@ public class DefaultFlatChunkGenerator implements FlatChunkGenerator {
                     chunk.setBlock(x, y, FlatBlock.BLOCK_AIR);
                 }
             }
-
-            if (random.nextInt(20) == 0) {
-                treeMap.put(x, h + 1);
-            }
         }
 
-        treeMap.forEach((x, y) -> this.generateTree(chunk, x, y, random));
-        treeMap.clear();
-    }
-
-    /**
-     * Generates a tree at the given coordinates
-     *
-     * @param chunk  The chunk
-     * @param x      The x coordinate
-     * @param y      The y coordinate
-     * @param random The seeded random
-     */
-    private void generateTree(final FlatChunk chunk, final int x, final int y, final Random random) {
-        // TODO: Trees at the edge of a chunk generate with missing leaves, needs fixing
-        // It would probably be a good idea to move tree generation out of the chunk generator and
-        // into some sort of post-generation world decorator (would fix tree issue)
-
-        // Generate trunk
-        final int trunkLen = random.nextInt(4) + 3;
-        for (int i = 0; i < trunkLen; i++) {
-            chunk.setBlockSafe(x, y + i, FlatBlock.BLOCK_WOOD);
-        }
-
-        // Generate crown
-        // Calculate initial width of the crown
-        int crownWidth = random.nextInt(3) + 3 + (trunkLen - 3);
-        while (crownWidth % 2 == 0) {
-            crownWidth++;
-        }
-
-        // Stack layers on top of the crown until we can't
-        int n = 0;
-        while (crownWidth > 0) {
-            final int middle = (crownWidth / 2);
-            for (int i = 0; i < crownWidth; i++) {
-                chunk.setBlockSafe(x - middle + i, y + trunkLen + n, FlatBlock.BLOCK_LEAVES);
-            }
-            n++;
-            crownWidth -= 2;
-        }
+        // Set generated flag
+        chunk.setGenerated(true);
     }
 
 }

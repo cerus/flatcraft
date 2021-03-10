@@ -72,7 +72,7 @@ public class FlatWorldStorageAdapter extends StorageAdapter<FlatWorld> {
         final int seed = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
         // Create world
-        final FlatWorld flatWorld = new FlatWorld(seed, new DefaultFlatChunkGenerator(), player);
+        final FlatWorld flatWorld = new FlatWorld(seed, new DefaultFlatChunkGenerator(), chunkDecorator, player);
         flatWorld.getGameObjects().addAll(gameObjects);
 
         // Read chunks
