@@ -1,19 +1,14 @@
 package de.cerus.flatcraft.game.storage;
 
 import de.cerus.flatcraft.game.chunk.FlatBlock;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * Represents the Papyrus block index
  */
-public class BlockIndex implements Storable<BlockIndex> {
+public class BlockIndex {
 
-    private String[] elements;
+    private final String[] elements;
 
     public BlockIndex(final int size) {
         this.elements = new String[size];
@@ -67,41 +62,6 @@ public class BlockIndex implements Storable<BlockIndex> {
             }
         }
         return -1;
-    }
-
-    @Override
-    public void store(final OutputStream stream, final Object... extra) throws IOException {
-        stream.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort((short) this.elements.length).array());
-        for (int i = 0; i < this.elements.length; i++) {
-            stream.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(i).array());
-            final String element = this.elements[i];
-            stream.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort((short) element.length()).array());
-            for (final char c : element.toCharArray()) {
-                stream.write((byte) c);
-            }
-        }
-    }
-
-    @Override
-    public BlockIndex read(final InputStream stream, final Object... extra) throws IOException {
-        byte[] arr = new byte[4];
-        stream.read(arr, 0, 2);
-        final short amt = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getShort();
-        this.elements = new String[amt];
-
-        for (int i = 0; i < this.elements.length; i++) {
-            arr = new byte[4];
-            stream.read(arr, 0, 4);
-            final int idx = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt();
-
-            stream.read(arr, 0, 2);
-            final short len = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getShort();
-
-            arr = new byte[len];
-            stream.read(arr, 0, len);
-            this.elements[idx] = new String(arr);
-        }
-        return this;
     }
 
     public String[] getElements() {

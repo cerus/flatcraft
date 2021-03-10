@@ -1,9 +1,6 @@
 package de.cerus.flatcraft.game;
 
 import de.cerus.flatcraft.util.Vec3;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -31,22 +28,6 @@ public class FlatPlayer extends FlatGameObject {
                 colorRef.set(new Vec3(99, 99, 99));
             }
         }
-    }
-
-    @Override
-    protected void storeData(final OutputStream stream) throws IOException {
-        // Write inventory data
-        // We don't have an inventory so we just write zeros
-        stream.write(0);
-        stream.write(0);
-    }
-
-    @Override
-    protected void readData(final InputStream stream) throws IOException {
-        // Read inventory data
-        // We don't have an inventory so we just ignore the read input
-        stream.read();
-        stream.read();
     }
 
 }
