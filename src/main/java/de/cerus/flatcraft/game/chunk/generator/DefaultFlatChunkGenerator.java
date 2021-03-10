@@ -76,25 +76,31 @@ public class DefaultFlatChunkGenerator implements FlatChunkGenerator {
      */
     private void generateTree(final FlatChunk chunk, final int x, final int y, final Random random) {
         // TODO: Trees at the edge of a chunk generate with missing leaves, needs fixing
+        // It would probably be a good idea to move tree generation out of the chunk generator and
+        // into some sort of post-generation world decorator (would fix tree issue)
 
+        // Generate trunk
         final int trunkLen = random.nextInt(4) + 3;
         for (int i = 0; i < trunkLen; i++) {
             chunk.setBlockSafe(x, y + i, FlatBlock.BLOCK_WOOD);
         }
 
-        int croneWidth = random.nextInt(3) + 3 + (trunkLen - 3);
-        while (croneWidth % 2 == 0) {
-            croneWidth++;
+        // Generate crown
+        // Calculate initial width of the crown
+        int crownWidth = random.nextInt(3) + 3 + (trunkLen - 3);
+        while (crownWidth % 2 == 0) {
+            crownWidth++;
         }
 
+        // Stack layers on top of the crown until we can't
         int n = 0;
-        while (croneWidth > 0) {
-            final int middle = (croneWidth / 2);
-            for (int i = 0; i < croneWidth; i++) {
+        while (crownWidth > 0) {
+            final int middle = (crownWidth / 2);
+            for (int i = 0; i < crownWidth; i++) {
                 chunk.setBlockSafe(x - middle + i, y + trunkLen + n, FlatBlock.BLOCK_LEAVES);
             }
             n++;
-            croneWidth -= 2;
+            crownWidth -= 2;
         }
     }
 
