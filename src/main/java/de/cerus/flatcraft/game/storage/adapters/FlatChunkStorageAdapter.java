@@ -25,6 +25,7 @@ public class FlatChunkStorageAdapter extends StorageAdapter<FlatChunk> {
         inputStream.read(arr, 0, 4);
         final int size = ByteBuffer.wrap(arr).order(ByteOrder.LITTLE_ENDIAN).getInt();
 
+        // Preserve backwards compatibility
         boolean extended = false;
         if (size != 16 * 64 && !(extended = size == 16 * 64 + 2)) {
             throw new IllegalStateException();

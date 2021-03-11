@@ -90,6 +90,15 @@ public class FlatWorld {
         if (chunk == null) {
             this.cachedChunks.put(x, chunk = this.loadChunk(x));
         }
+
+        if (!chunk.isGenerated()) {
+            // o.O
+            this.chunkGenerator.generate(this, chunk);
+        }
+        if (!chunk.isDecorated()) {
+            this.chunkDecorator.decorate(chunk, this);
+        }
+
         return chunk;
     }
 
