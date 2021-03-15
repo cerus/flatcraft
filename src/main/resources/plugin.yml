@@ -3,3 +3,13 @@ version: ${project.version}
 main: de.cerus.flatcraft.FlatCraftPlugin
 author: Cerus
 api-version: 1.16
+
+permissions:
+  flatcraft.game.action.move:
+    default: true
+  flatcraft.game.action.blockplace:
+    default: true
+  flatcraft.game.action.blockbreak:
+    default: true
+  flatcraft.game.block.*:
+    default: true

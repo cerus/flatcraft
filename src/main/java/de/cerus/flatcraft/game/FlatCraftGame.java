@@ -7,8 +7,15 @@ import de.cerus.flatcraft.game.renderer.menu.DefaultFlatMenuRenderer;
 import de.cerus.flatcraft.game.renderer.menu.FlatMenuRenderer;
 import de.cerus.flatcraft.game.renderer.world.DefaultFlatWorldRenderer;
 import de.cerus.flatcraft.game.renderer.world.FlatWorldRenderer;
+import de.cerus.flatcraft.game.security.DefaultFlatSecurityProvider;
+import de.cerus.flatcraft.game.security.FlatSecurityProvider;
+import de.cerus.flatcraft.game.security.context.BlockSecurityContext;
+import de.cerus.flatcraft.game.security.context.MoveSecurityContext;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.kyori.adventure.text.Component;
+import org.bukkit.entity.Player;
 
 public class FlatCraftGame {
 
@@ -16,24 +23,30 @@ public class FlatCraftGame {
     public static final int MODE_PLACE = 1;
     public static final int MODE_BREAK = 2;
 
+    private final Player bukkitPlayer;
     private final FlatWorld world;
     private final FlatWorldRenderer worldRenderer;
     private final FlatMenuRenderer menuRenderer;
     private final RenderCombiner renderCombiner;
+    private final Set<FlatSecurityProvider> securityProviderSet;
 
     // 0 = Walk, 1 = Place, 2 = Break
     private int mode = 0;
     private FlatBlock selectedBlock = FlatBlock.BLOCK_STONE;
 
-    public FlatCraftGame(final FlatWorld world) {
-        this(world, new DefaultFlatWorldRenderer(), new DefaultFlatMenuRenderer(), new DefaultRenderCombiner());
+    public FlatCraftGame(final FlatWorld world, final Player bukkitPlayer) {
+        this(bukkitPlayer, world, new DefaultFlatWorldRenderer(), new DefaultFlatMenuRenderer(), new DefaultRenderCombiner());
     }
 
-    public FlatCraftGame(final FlatWorld world, final FlatWorldRenderer worldRenderer, final FlatMenuRenderer menuRenderer, final RenderCombiner renderCombiner) {
+    public FlatCraftGame(final Player bukkitPlayer, final FlatWorld world, final FlatWorldRenderer worldRenderer, final FlatMenuRenderer menuRenderer, final RenderCombiner renderCombiner) {
+        this.bukkitPlayer = bukkitPlayer;
         this.world = world;
         this.worldRenderer = worldRenderer;
         this.menuRenderer = menuRenderer;
         this.renderCombiner = renderCombiner;
+        this.securityProviderSet = new HashSet<>();
+
+        this.securityProviderSet.add(new DefaultFlatSecurityProvider());
     }
 
     public boolean handleInteract(final int x, final int y) {
@@ -42,6 +55,10 @@ public class FlatCraftGame {
                 if (x == this.world.getPlayer().x) {
                     return false;
                 }
+
+                // Save current coordinates
+                final int prevX = this.world.getPlayer().x;
+                final int prevY = this.world.getPlayer().y;
 
                 final int newX;
                 if (x < this.world.getPlayer().x) {
@@ -88,9 +105,39 @@ public class FlatCraftGame {
                 if ((player.x / 16) - 2 >= 0) {
                     this.world.getChunkAt((this.world.getPlayer().x / 16) - 2);
                 }
+
+                // Check if security providers are okay with this
+                if (!this.securityProviderSet.stream()
+                        .allMatch(flatSecurityProvider ->
+                                flatSecurityProvider.checkAction(FlatSecurityProvider.FlatAction.MOVE, new MoveSecurityContext(
+                                        this.bukkitPlayer,
+                                        prevX,
+                                        prevY,
+                                        this.world.getPlayer().x,
+                                        this.world.getPlayer().y,
+                                        this.world
+                                )))) {
+                    // Reset coords
+                    this.world.getPlayer().x = prevX;
+                    this.world.getPlayer().y = prevY;
+                    return false;
+                }
                 return true;
             case MODE_PLACE:
                 if (x < 0 || x / 16 > this.world.getMaxSize() || y < 1 || y > 60) {
+                    return false;
+                }
+
+                // Check if security providers are okay with this
+                if (!this.securityProviderSet.stream()
+                        .allMatch(flatSecurityProvider ->
+                                flatSecurityProvider.checkAction(FlatSecurityProvider.FlatAction.PLACE_BLOCK, new BlockSecurityContext(
+                                        this.bukkitPlayer,
+                                        x,
+                                        y,
+                                        this.selectedBlock,
+                                        this.world
+                                )))) {
                     return false;
                 }
 
@@ -105,6 +152,19 @@ public class FlatCraftGame {
                     return false;
                 }
                 if (this.world.getBlockAt(x, y) == FlatBlock.BLOCK_AIR) {
+                    return false;
+                }
+
+                // Check if security providers are okay with this
+                if (!this.securityProviderSet.stream()
+                        .allMatch(flatSecurityProvider ->
+                                flatSecurityProvider.checkAction(FlatSecurityProvider.FlatAction.BREAK_BLOCK, new BlockSecurityContext(
+                                        this.bukkitPlayer,
+                                        x,
+                                        y,
+                                        this.selectedBlock,
+                                        this.world
+                                )))) {
                     return false;
                 }
 

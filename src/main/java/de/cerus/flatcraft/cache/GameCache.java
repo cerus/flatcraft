@@ -76,7 +76,7 @@ public class GameCache {
         return this.papyrusStorage.load(owner.getUniqueId())
                 .thenApply(world -> world == null ? new FlatWorld(String.valueOf(System.currentTimeMillis()).hashCode()) : world)
                 .whenComplete((world, throwable) -> {
-                    this.gameMap.put(owner.getUniqueId(), new FlatCraftGame(world));
+                    this.gameMap.put(owner.getUniqueId(), new FlatCraftGame(world, owner));
                     this.lastUseMap.put(owner.getUniqueId(), System.currentTimeMillis());
                 })
                 .thenApply(world -> this.gameMap.get(owner.getUniqueId()));
