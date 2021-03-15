@@ -16,12 +16,12 @@ import java.util.TreeMap;
  */
 public class FlatWorld {
 
+    final FlatPlayer player;
     private final FlatChunkGenerator chunkGenerator;
     private final FlatChunkDecorator chunkDecorator;
     private final Map<Integer, FlatChunk> cachedChunks;
     private final List<FlatGameObject> gameObjects;
     private final int seed;
-    private final FlatPlayer player;
     private int maxSize;
 
     public FlatWorld(final int seed) {

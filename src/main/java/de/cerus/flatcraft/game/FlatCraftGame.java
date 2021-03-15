@@ -1,6 +1,9 @@
 package de.cerus.flatcraft.game;
 
 import de.cerus.flatcraft.game.chunk.FlatBlock;
+import de.cerus.flatcraft.game.event.DefaultEventDistributor;
+import de.cerus.flatcraft.game.event.FlatEventDistributor;
+import de.cerus.flatcraft.game.event.events.FlatGameInitEvent;
 import de.cerus.flatcraft.game.renderer.combine.DefaultRenderCombiner;
 import de.cerus.flatcraft.game.renderer.combine.RenderCombiner;
 import de.cerus.flatcraft.game.renderer.menu.DefaultFlatMenuRenderer;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import org.intellij.lang.annotations.MagicConstant;
 
 public class FlatCraftGame {
 
@@ -25,10 +29,11 @@ public class FlatCraftGame {
 
     private final Player bukkitPlayer;
     private final FlatWorld world;
-    private final FlatWorldRenderer worldRenderer;
-    private final FlatMenuRenderer menuRenderer;
-    private final RenderCombiner renderCombiner;
     private final Set<FlatSecurityProvider> securityProviderSet;
+    private FlatWorldRenderer worldRenderer;
+    private FlatMenuRenderer menuRenderer;
+    private RenderCombiner renderCombiner;
+    private FlatEventDistributor eventDistributor;
 
     // 0 = Walk, 1 = Place, 2 = Break
     private int mode = 0;
@@ -44,29 +49,31 @@ public class FlatCraftGame {
         this.worldRenderer = worldRenderer;
         this.menuRenderer = menuRenderer;
         this.renderCombiner = renderCombiner;
+        this.eventDistributor = new DefaultEventDistributor();
         this.securityProviderSet = new HashSet<>();
 
         this.securityProviderSet.add(new DefaultFlatSecurityProvider());
+        this.eventDistributor.distributeEvent(new FlatGameInitEvent(this));
     }
 
     public boolean handleInteract(final int x, final int y) {
         switch (this.mode) {
             case MODE_WALK:
-                if (x == this.world.getPlayer().x) {
+                if (x == this.world.player.x) {
                     return false;
                 }
 
                 // Save current coordinates
-                final int prevX = this.world.getPlayer().x;
-                final int prevY = this.world.getPlayer().y;
+                final int prevX = this.world.player.x;
+                final int prevY = this.world.player.y;
 
                 final int newX;
-                if (x < this.world.getPlayer().x) {
+                if (x < this.world.player.x) {
                     // Left
-                    newX = this.world.getPlayer().x - 1;
+                    newX = this.world.player.x - 1;
                 } else {
                     // Right
-                    newX = this.world.getPlayer().x + 1;
+                    newX = this.world.player.x + 1;
                 }
 
                 if (newX < 0 || newX / 16 > this.world.getMaxSize()) {
@@ -74,36 +81,36 @@ public class FlatCraftGame {
                 }
 
                 FlatBlock block;
-                if ((block = this.world.getBlockAt(newX, this.world.getPlayer().y)) != FlatBlock.BLOCK_AIR && block.hasCollider()
-                        || (block = this.world.getBlockAt(newX, this.world.getPlayer().y + 1)) != FlatBlock.BLOCK_AIR && block.hasCollider()) {
-                    if ((block = this.world.getBlockAt(newX, this.world.getPlayer().y + 1)) != FlatBlock.BLOCK_AIR && block.hasCollider()
-                            || (block = this.world.getBlockAt(newX, this.world.getPlayer().y + 2)) != FlatBlock.BLOCK_AIR && block.hasCollider()) {
+                if ((block = this.world.getBlockAt(newX, this.world.player.y)) != FlatBlock.BLOCK_AIR && block.hasCollider()
+                        || (block = this.world.getBlockAt(newX, this.world.player.y + 1)) != FlatBlock.BLOCK_AIR && block.hasCollider()) {
+                    if ((block = this.world.getBlockAt(newX, this.world.player.y + 1)) != FlatBlock.BLOCK_AIR && block.hasCollider()
+                            || (block = this.world.getBlockAt(newX, this.world.player.y + 2)) != FlatBlock.BLOCK_AIR && block.hasCollider()) {
                         return false;
                     }
 
-                    this.world.getPlayer().x = newX;
-                    this.world.getPlayer().y += 1;
+                    this.world.player.x = newX;
+                    this.world.player.y += 1;
                 } else {
-                    this.world.getPlayer().x = newX;
+                    this.world.player.x = newX;
                 }
 
-                while (this.world.getPlayer().y > 0 && (block = this.world.getBlockAt(newX, this.world.getPlayer().y - 1)) == FlatBlock.BLOCK_AIR || !block.hasCollider()) {
-                    this.world.getPlayer().y -= 1;
+                while (this.world.player.y > 0 && (block = this.world.getBlockAt(newX, this.world.player.y - 1)) == FlatBlock.BLOCK_AIR || !block.hasCollider()) {
+                    this.world.player.y -= 1;
                 }
 
                 // Load nearby 4 chunks
-                final FlatPlayer player = this.world.getPlayer();
+                final FlatPlayer player = this.world.player;
                 if ((player.x / 16) + 1 < this.world.getMaxSize()) {
-                    this.world.getChunkAt((this.world.getPlayer().x / 16) + 1);
+                    this.world.getChunkAt((this.world.player.x / 16) + 1);
                 }
                 if ((player.x / 16) + 2 < this.world.getMaxSize()) {
-                    this.world.getChunkAt((this.world.getPlayer().x / 16) + 2);
+                    this.world.getChunkAt((this.world.player.x / 16) + 2);
                 }
                 if ((player.x / 16) - 1 >= 0) {
-                    this.world.getChunkAt((this.world.getPlayer().x / 16) - 1);
+                    this.world.getChunkAt((this.world.player.x / 16) - 1);
                 }
                 if ((player.x / 16) - 2 >= 0) {
-                    this.world.getChunkAt((this.world.getPlayer().x / 16) - 2);
+                    this.world.getChunkAt((this.world.player.x / 16) - 2);
                 }
 
                 // Check if security providers are okay with this
@@ -113,13 +120,13 @@ public class FlatCraftGame {
                                         this.bukkitPlayer,
                                         prevX,
                                         prevY,
-                                        this.world.getPlayer().x,
-                                        this.world.getPlayer().y,
+                                        this.world.player.x,
+                                        this.world.player.y,
                                         this.world
                                 )))) {
                     // Reset coords
-                    this.world.getPlayer().x = prevX;
-                    this.world.getPlayer().y = prevY;
+                    this.world.player.x = prevX;
+                    this.world.player.y = prevY;
                     return false;
                 }
                 return true;
@@ -142,8 +149,8 @@ public class FlatCraftGame {
                 }
 
                 this.world.setBlockAt(x, y, this.selectedBlock);
-                if (this.world.getPlayer().y == y && this.world.getPlayer().x == x && this.selectedBlock.hasCollider()) {
-                    this.world.getPlayer().y += 1;
+                if (this.world.player.y == y && this.world.player.x == x && this.selectedBlock.hasCollider()) {
+                    this.world.player.y += 1;
                 }
                 return true;
             case MODE_BREAK:
@@ -169,9 +176,9 @@ public class FlatCraftGame {
                 }
 
                 this.world.setBlockAt(x, y, FlatBlock.BLOCK_AIR);
-                if (this.world.getPlayer().y > 0) {
-                    while (this.world.getBlockAt(this.world.getPlayer().x, this.world.getPlayer().y - 1) == FlatBlock.BLOCK_AIR) {
-                        this.world.getPlayer().y -= 1;
+                if (this.world.player.y > 0) {
+                    while (this.world.getBlockAt(this.world.player.x, this.world.player.y - 1) == FlatBlock.BLOCK_AIR) {
+                        this.world.player.y -= 1;
                     }
                 }
                 return true;
@@ -201,7 +208,7 @@ public class FlatCraftGame {
         return this.mode;
     }
 
-    public void setMode(final int mode) {
+    public void setMode(@MagicConstant(intValues = {MODE_WALK, MODE_PLACE, MODE_BREAK}) final int mode) {
         this.mode = mode;
     }
 
@@ -209,4 +216,43 @@ public class FlatCraftGame {
         return this.selectedBlock;
     }
 
+    public Player getBukkitPlayer() {
+        return this.bukkitPlayer;
+    }
+
+    public Set<FlatSecurityProvider> getSecurityProviderSet() {
+        return this.securityProviderSet;
+    }
+
+    public FlatWorldRenderer getWorldRenderer() {
+        return this.worldRenderer;
+    }
+
+    public void setWorldRenderer(final FlatWorldRenderer worldRenderer) {
+        this.worldRenderer = worldRenderer;
+    }
+
+    public FlatMenuRenderer getMenuRenderer() {
+        return this.menuRenderer;
+    }
+
+    public void setMenuRenderer(final FlatMenuRenderer menuRenderer) {
+        this.menuRenderer = menuRenderer;
+    }
+
+    public RenderCombiner getRenderCombiner() {
+        return this.renderCombiner;
+    }
+
+    public void setRenderCombiner(final RenderCombiner renderCombiner) {
+        this.renderCombiner = renderCombiner;
+    }
+
+    public FlatEventDistributor getEventDistributor() {
+        return this.eventDistributor;
+    }
+
+    public void setEventDistributor(final FlatEventDistributor eventDistributor) {
+        this.eventDistributor = eventDistributor;
+    }
 }
